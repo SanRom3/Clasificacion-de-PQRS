@@ -1,0 +1,24 @@
+# ─────────────────────────────────────────────────────────────
+# requirements.txt  →  Streamlit Cloud (solo lo que necesita
+#                       la app para correr en producción)
+# Para entrenamiento local usar: requirements-train.txt
+# ─────────────────────────────────────────────────────────────
+
+# App
+streamlit==1.35.0
+
+# ML (necesarios para cargar y correr el pipeline guardado)
+scikit-learn==1.5.0
+xgboost==2.0.3
+lightgbm==4.3.0
+joblib==1.4.2
+
+# NLP
+nltk==3.8.1
+
+# Visualización
+plotly==5.22.0
+
+# Utilidades
+pandas==2.2.2
+numpy==1.26.4

@@ -1,0 +1,23 @@
+# ─────────────────────────────────────────────────────────────
+# requirements-train.txt  →  Entrenamiento local
+# Incluye todo lo de requirements.txt + dependencias de training
+#
+# Instalación:
+#   pip install -r requirements-train.txt
+#   python -m spacy download es_core_news_sm
+# ─────────────────────────────────────────────────────────────
+
+-r requirements.txt
+
+# AutoML
+optuna==3.6.1
+
+# Tracking de experimentos
+mlflow==2.13.0
+
+# NLP (lematización)
+spacy==3.7.4
+
+# Visualización adicional (reportes)
+matplotlib==3.9.0
+seaborn==0.13.2
