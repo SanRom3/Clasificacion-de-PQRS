@@ -33,7 +33,7 @@ def print_report(y_true, y_pred, id2label: dict):
     labels     = sorted(id2label.keys())
     label_names = [id2label[i] for i in labels]
 
-    print("\n📊 Reporte de Clasificación")
+    print("\n[*] Reporte de Clasificacion")
     print("=" * 50)
     print(classification_report(y_true, y_pred, target_names=label_names))
     print(f"   Accuracy:   {accuracy_score(y_true, y_pred):.4f}")
@@ -65,7 +65,7 @@ def plot_confusion_matrix(y_true, y_pred, id2label: dict, save: bool = True):
 
     if save:
         fig.write_html(REPORTS_DIR / "confusion_matrix.html")
-        print(f"✅ Matriz guardada en reports/confusion_matrix.html")
+        print(f"[OK] Matriz guardada en reports/confusion_matrix.html")
 
     return fig
 
@@ -123,7 +123,7 @@ def plot_optuna_history(study, save: bool = True):
 
     if save:
         fig.write_html(REPORTS_DIR / "optuna_history.html")
-        print(f"✅ Historial Optuna guardado en reports/optuna_history.html")
+        print(f"[OK] Historial Optuna guardado en reports/optuna_history.html")
 
     return fig
 
@@ -177,7 +177,7 @@ def plot_model_comparison(study, save: bool = True):
 
     if save:
         fig.write_html(REPORTS_DIR / "model_comparison.html")
-        print(f"✅ Comparación guardada en reports/model_comparison.html")
+        print(f"[OK] Comparacion guardada en reports/model_comparison.html")
 
     return fig
 
@@ -201,6 +201,6 @@ def export_summary(study, y_true, y_pred, id2label: dict):
 
     df = pd.DataFrame([summary])
     df.to_csv(REPORTS_DIR / "experiment_summary.csv", index=False)
-    print(f"\n📄 Resumen guardado en reports/experiment_summary.csv")
+    print(f"\n[OK] Resumen guardado en reports/experiment_summary.csv")
     print(df.to_string(index=False))
     return summary

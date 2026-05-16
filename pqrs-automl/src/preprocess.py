@@ -80,7 +80,7 @@ def preprocess_dataframe(
     Aplica el pipeline de limpieza al DataFrame completo.
     Agrega columna 'texto_limpio' y codifica labels numéricamente.
     """
-    print("🔄 Preprocesando textos...")
+    print("[*] Preprocesando textos...")
     df = df.copy()
 
     # Limpiar texto
@@ -95,8 +95,8 @@ def preprocess_dataframe(
 
     df["label"] = df[label_col].map(label2id)
 
-    print(f"✅ Preprocesamiento completo.")
-    print(f"   Clases encontradas: {label2id}")
+    print("[OK] Preprocesamiento completo.")
+    print(f"     Clases encontradas: {label2id}")
 
     return df, label2id, id2label
 
@@ -124,7 +124,7 @@ def split_data(
         stratify=y_train,
     )
 
-    print(f"📊 Split: train={len(X_train)}, val={len(X_val)}, test={len(X_test)}")
+    print(f"[OK] Split: train={len(X_train)}, val={len(X_val)}, test={len(X_test)}")
     return X_train, X_val, X_test, y_train, y_val, y_test
 
 

@@ -21,7 +21,7 @@ from sklearn.metrics import f1_score
 
 optuna.logging.set_verbosity(optuna.logging.WARNING)  # menos ruido en consola
 
-MODELS_DIR = Path("models")
+MODELS_DIR = Path(__file__).parent.parent / "models"
 MODELS_DIR.mkdir(exist_ok=True)
 
 
@@ -109,7 +109,7 @@ def objective(trial, X_train, y_train, X_val, y_val):
         score = f1_score(y_val, preds, average="macro")
     except Exception as e:
         # Si un modelo falla (ej: NB con CountVectorizer y valores negativos)
-        print(f"  ⚠️  Trial {trial.number} falló: {e}")
+        print(f"  [!] Trial {trial.number} fallo: {e}")
         return 0.0
 
     return score
@@ -132,9 +132,9 @@ class AutoMLClassifier:
         # Configurar MLflow
         mlflow.set_experiment(self.experiment_name)
 
-        print(f"\n🔍 Iniciando búsqueda AutoML con {self.n_trials} trials...")
-        print(f"   Comparando: Logistic, SVM, RandomForest, GradBoost, NaiveBayes")
-        print(f"   Vectorizadores: TF-IDF, CountVectorizer\n")
+        print(f"\n[*] Iniciando busqueda AutoML con {self.n_trials} trials...")
+        print(f"    Comparando: Logistic, SVM, RandomForest, GradBoost, NaiveBayes")
+        print(f"    Vectorizadores: TF-IDF, CountVectorizer\n")
 
         # Crear estudio de Optuna
         self.study = optuna.create_study(
@@ -155,10 +155,10 @@ class AutoMLClassifier:
             mlflow.log_params(best_params)
             mlflow.log_metric("best_val_f1_macro", best_score)
 
-        print(f"\n✅ Búsqueda completada!")
-        print(f"   Mejor F1-macro (val): {best_score:.4f}")
-        print(f"   Mejor clasificador:   {best_params.get('classifier')}")
-        print(f"   Mejor vectorizador:   {best_params.get('vectorizer')}")
+        print(f"\n[OK] Busqueda completada!")
+        print(f"     Mejor F1-macro (val): {best_score:.4f}")
+        print(f"     Mejor clasificador:   {best_params.get('classifier')}")
+        print(f"     Mejor vectorizador:   {best_params.get('vectorizer')}")
 
         # Re-entrenar el mejor pipeline con train+val
         X_full = list(X_train) + list(X_val)
@@ -170,7 +170,7 @@ class AutoMLClassifier:
         # Guardar modelo
         model_path = MODELS_DIR / "best_pipeline.pkl"
         joblib.dump(self.best_pipeline, model_path)
-        print(f"   Modelo guardado en: {model_path}")
+        print(f"     Modelo guardado en: {model_path}")
 
         return self
 
