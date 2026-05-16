@@ -7,7 +7,7 @@ Permite clasificar PQRS en tiempo real con el modelo entrenado.
 Uso:
     streamlit run app.py
 """
-
+from src.preprocess import clean_text
 import streamlit as st
 import joblib
 import nltk
@@ -18,7 +18,7 @@ from pathlib import Path
 # Descargar recursos NLTK al arrancar (necesario en Streamlit Cloud)
 nltk.download("stopwords", quiet=True)
 
-from src.preprocess import clean_text
+
 
 # ─────────────────────────────────────────────
 # Configuración de la página
@@ -191,7 +191,7 @@ def main():
         if probas is not None:
             st.markdown("")
             labels = [ID2LABEL[i] for i in range(len(probas))]
-            colors = [CATEGORY_COLORS.get(l, "#6B7280") for l in labels]
+            colors = [CATEGORY_COLORS.get(label, "#6B7280") for label in labels]
 
             fig = go.Figure(go.Bar(
                 x=labels,
