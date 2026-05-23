@@ -1,19 +1,4 @@
-"""
-generate_data.py
-----------------
-Genera un dataset sintético de PQRS en español.
-Incluye 4 estilos de escritura + casos ambiguos para mayor robustez del modelo.
-
-Estilos:
-  - Formal        : lenguaje institucional y elaborado
-  - Coloquial     : tono informal y directo
-  - Corto         : frases breves sin contexto
-  - Con contexto  : narración con detalles específicos
-
-Uso:
-  python generate_data.py                  # 4000 muestras por defecto
-  python generate_data.py --samples 6000   # más muestras
-"""
+#Genera un dataset sintético de PQRS en español
 
 import argparse
 import random
@@ -41,7 +26,7 @@ MESES        = ["semanas", "meses"]
 NUMEROS      = list(range(1, 8))
 
 
-# PLANTILLAS POR CATEGORÍA Y ESTILO
+# Casos "normales"
 
 TEMPLATES = {
 
@@ -164,9 +149,7 @@ TEMPLATES = {
     },
 }
 
-# CASOS AMBIGUOS
-# Etiquetados con la categoría más probable,
-# pero con lenguaje que mezcla dos categorías.
+# CASOS ambiguos
 
 AMBIGUOUS = [
     # Queja con tono de Reclamo
@@ -213,8 +196,6 @@ AMBIGUOUS = [
 ]
 
 
-# Urgencia por categoría
-
 URGENCIAS = {
     "Reclamo":    ["Alta", "Alta", "Media", "Alta"],
     "Queja":      ["Media", "Alta", "Baja", "Media"],
@@ -226,17 +207,13 @@ ESTILOS = ["formal", "coloquial", "corto", "contexto"]
 
 
 
-# Generador
-
 def generate_dataset(n_samples: int = 4000) -> pd.DataFrame:
     records   = []
     categorias = list(TEMPLATES.keys())
 
-    # Reservar ~15% para casos ambiguos
     n_ambiguos = int(n_samples * 0.15)
     n_normales = n_samples - n_ambiguos
-
-    # ── Muestras normales 
+     
     for _ in range(n_normales):
         categoria = random.choice(categorias)
         estilo    = random.choice(ESTILOS)
@@ -258,19 +235,15 @@ def generate_dataset(n_samples: int = 4000) -> pd.DataFrame:
         urgencia = random.choice(URGENCIAS[categoria])
         records.append({"texto": texto, "categoria": categoria, "urgencia": urgencia})
 
-    # Casos ambiguos
+    
     for _ in range(n_ambiguos):
         texto, categoria = random.choice(AMBIGUOUS)
         urgencia = random.choice(URGENCIAS[categoria])
         records.append({"texto": texto, "categoria": categoria, "urgencia": urgencia})
 
-    # Mezclar
+    
     random.shuffle(records)
     return pd.DataFrame(records)
-
-
-
-# Main
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
