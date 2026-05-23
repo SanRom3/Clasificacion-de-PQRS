@@ -1,19 +1,11 @@
-"""
-src/preprocess.py
------------------
-Limpieza y normalización de texto en español para PQRS.
-"""
-
 import re
 import pandas as pd
 import nltk
 from sklearn.model_selection import train_test_split
 
-# Descargar stopwords si no están disponibles (necesario en Streamlit Cloud)
 nltk.download("stopwords", quiet=True)
 from nltk.corpus import stopwords
 
-# spaCy es opcional — solo se usa si está instalado (entrenamiento local)
 try:
     import spacy
     nlp = spacy.load("es_core_news_sm")
@@ -23,17 +15,13 @@ except (ImportError, OSError):
 STOPWORDS_ES = set(stopwords.words("spanish"))
 
 
-# ─────────────────────────────────────────────
-# Funciones de limpieza
-# ─────────────────────────────────────────────
-
 def remove_special_chars(text: str) -> str:
     """Elimina caracteres especiales conservando letras españolas."""
-    text = re.sub(r"http\S+|www\S+", "", text)       # URLs
-    text = re.sub(r"\S+@\S+", "", text)               # emails
-    text = re.sub(r"\d+", " ", text)                  # números
-    text = re.sub(r"[^\w\sáéíóúñüÁÉÍÓÚÑÜ]", " ", text)  # puntuación
-    text = re.sub(r"\s+", " ", text).strip()          # espacios múltiples
+    text = re.sub(r"http\S+|www\S+", "", text)       
+    text = re.sub(r"\S+@\S+", "", text)               
+    text = re.sub(r"\d+", " ", text)                  
+    text = re.sub(r"[^\w\sáéíóúñüÁÉÍÓÚÑÜ]", " ", text)  
+    text = re.sub(r"\s+", " ", text).strip()          
     return text
 
 
@@ -66,10 +54,6 @@ def clean_text(text: str, use_lemmatization: bool = True) -> str:
     return text
 
 
-# ─────────────────────────────────────────────
-# Pipeline sobre DataFrame
-# ─────────────────────────────────────────────
-
 def preprocess_dataframe(
     df: pd.DataFrame,
     text_col: str = "texto",
@@ -83,12 +67,10 @@ def preprocess_dataframe(
     print("[*] Preprocesando textos...")
     df = df.copy()
 
-    # Limpiar texto
     df["texto_limpio"] = df[text_col].apply(
         lambda x: clean_text(x, use_lemmatization=use_lemmatization)
     )
 
-    # Codificar etiquetas
     categorias = sorted(df[label_col].unique())
     label2id   = {cat: i for i, cat in enumerate(categorias)}
     id2label   = {i: cat for cat, i in label2id.items()}
@@ -107,10 +89,6 @@ def split_data(
     val_size: float = 0.1,
     random_state: int = 42,
 ):
-    """
-    Divide en train / val / test de forma estratificada.
-    Returns: X_train, X_val, X_test, y_train, y_val, y_test
-    """
     X = df["texto_limpio"]
     y = df["label"]
 
@@ -128,9 +106,6 @@ def split_data(
     return X_train, X_val, X_test, y_train, y_val, y_test
 
 
-# ─────────────────────────────────────────────
-# Uso independiente
-# ─────────────────────────────────────────────
 if __name__ == "__main__":
     ejemplo = "Llevo 3 meses esperando respuesta a mi solicitud, es inaceptable!!"
     print(f"Original:  {ejemplo}")
