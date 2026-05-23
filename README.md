@@ -6,10 +6,7 @@ Sistema de Machine Learning automatizado para clasificar Peticiones, Quejas, Rec
 
 ## Problema que resuelve
 
-Toda entidad en Colombia está obligada a gestionar PQRS. El problema es que llegan cientos por día y alguien las lee una a una para clasificarlas y asignarlas al área correcta. Este sistema las clasifica **automáticamente** con alta precisión.
-
-**Sin AutoML:** el desarrollador prueba modelos uno a uno manualmente.  
-**Con AutoML:** el sistema evalúa 50+ combinaciones de modelos e hiperparámetros y elige la mejor automáticamente.
+El ptoyecto y la idea nacen de que toda entidad en Colombia está obligada a gestionar PQRS. El problema es que llegan cientos por día y alguien las lee una a una para clasificarlas y asignarlas al área correcta. Este sistema las clasifica **automáticamente** con alta precisión.
 
 El hecho de que todas las entidades colombianas deban gestionar todo lo que reciben fue mi mayor motivación y lo que me dió la principal idea de hacer este proyecto, pero de igual manera me parece algo muy útil de forma general ya que en cualquier area donde se reciban sugerencias, quejas o cosas por el estilo nunca está demás saber a cuales se les debe dar más importancia, se podría pensar que simplemente se puede dejar a criterio de la persona que escribe la sugerencia o queja pero esto puede traer problemas de que cosas que realmente no son tan importantes o necesarias de revisión inmediata sean marcadas como emergencia, por esto, es mejor este sistema que hace eso automáticamente y de manera indiferente a sentimientos u opiniones
 
