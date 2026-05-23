@@ -1,9 +1,3 @@
-"""
-src/evaluate.py
----------------
-Métricas, gráficas y reportes para el modelo final.
-"""
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -24,10 +18,6 @@ REPORTS_DIR = Path("reports")
 REPORTS_DIR.mkdir(exist_ok=True)
 
 
-# ─────────────────────────────────────────────
-# Métricas
-# ─────────────────────────────────────────────
-
 def print_report(y_true, y_pred, id2label: dict):
     """Imprime el reporte completo de clasificación."""
     labels     = sorted(id2label.keys())
@@ -40,10 +30,6 @@ def print_report(y_true, y_pred, id2label: dict):
     print(f"   F1-macro:   {f1_score(y_true, y_pred, average='macro'):.4f}")
     print(f"   F1-weighted:{f1_score(y_true, y_pred, average='weighted'):.4f}")
 
-
-# ─────────────────────────────────────────────
-# Gráfica 1: Matriz de confusión
-# ─────────────────────────────────────────────
 
 def plot_confusion_matrix(y_true, y_pred, id2label: dict, save: bool = True):
     labels      = sorted(id2label.keys())
@@ -70,10 +56,6 @@ def plot_confusion_matrix(y_true, y_pred, id2label: dict, save: bool = True):
     return fig
 
 
-# ─────────────────────────────────────────────
-# Gráfica 2: Historial de búsqueda AutoML (Optuna)
-# ─────────────────────────────────────────────
-
 def plot_optuna_history(study, save: bool = True):
     """Muestra cómo Optuna fue mejorando el F1 con cada trial."""
     df_trials = study.trials_dataframe()
@@ -89,7 +71,6 @@ def plot_optuna_history(study, save: bool = True):
         vertical_spacing=0.15,
     )
 
-    # Scatter de todos los trials
     fig.add_trace(
         go.Scatter(
             x=df_trials["number"],
@@ -101,7 +82,6 @@ def plot_optuna_history(study, save: bool = True):
         row=1, col=1,
     )
 
-    # Línea de mejor acumulado
     fig.add_trace(
         go.Scatter(
             x=df_trials["number"],
@@ -128,16 +108,11 @@ def plot_optuna_history(study, save: bool = True):
     return fig
 
 
-# ─────────────────────────────────────────────
-# Gráfica 3: Comparación de modelos
-# ─────────────────────────────────────────────
-
 def plot_model_comparison(study, save: bool = True):
     """Compara el F1 promedio por tipo de clasificador."""
     df = study.trials_dataframe()
     df = df[df["state"] == "COMPLETE"].copy()
 
-    # Extraer nombre del clasificador
     df["classifier"] = df["params_classifier"]
 
     agg = (
@@ -181,10 +156,6 @@ def plot_model_comparison(study, save: bool = True):
 
     return fig
 
-
-# ─────────────────────────────────────────────
-# Exportar resumen en CSV
-# ─────────────────────────────────────────────
 
 def export_summary(study, y_true, y_pred, id2label: dict):
     """Guarda un CSV con el resumen del experimento."""
