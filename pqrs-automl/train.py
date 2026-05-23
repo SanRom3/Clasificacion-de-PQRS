@@ -1,15 +1,3 @@
-"""
-train.py
---------
-Script principal de entrenamiento.
-Ejecuta el pipeline completo: datos -> preprocesamiento -> AutoML -> evaluacion.
-
-Uso:
-    python train.py                    # 50 trials (por defecto)
-    python train.py --trials 20        # busqueda mas rapida para pruebas
-    python train.py --trials 100       # busqueda mas exhaustiva
-"""
-
 import sys
 import io
 import argparse
@@ -25,7 +13,6 @@ from src.evaluate import (
     export_summary,
 )
 
-# Forzar encoding UTF-8 en Windows para evitar errores con caracteres especiales
 sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8", errors="replace")
 sys.stderr = io.TextIOWrapper(sys.stderr.buffer, encoding="utf-8", errors="replace")
 
@@ -51,7 +38,6 @@ def main():
     print("  AutoML para Clasificacion de PQRS en Espanol")
     print("=" * 55)
 
-    # Cargar datos
     print(f"\n[*] Cargando datos desde: {args.data}")
 
     if not Path(args.data).exists():
@@ -67,12 +53,10 @@ def main():
     print(f"     Total de registros: {len(df)}")
     print(f"     Distribucion:\n{df['categoria'].value_counts().to_string()}")
 
-    # Preprocesamiento 
     print("\n[*] Iniciando preprocesamiento...")
     df, label2id, id2label = preprocess_dataframe(df, use_lemmatization=False)
     X_train, X_val, X_test, y_train, y_val, y_test = split_data(df)
 
-    # AutoML
     print(f"\n[*] Iniciando busqueda AutoML con {args.trials} trials...")
     automl = AutoMLClassifier(
         n_trials=args.trials,
@@ -80,7 +64,6 @@ def main():
     )
     automl.fit(X_train, y_train, X_val, y_val)
 
-    # Verificar que el modelo se guardo
     model_path = Path("models/best_pipeline.pkl")
     if model_path.exists():
         size_kb = model_path.stat().st_size / 1024
@@ -91,12 +74,10 @@ def main():
         print("\n[ERROR] El modelo NO fue guardado. Revisa los logs de Optuna.")
         sys.exit(1)
 
-    # Evaluacion en test
     print("\n[*] Evaluando en conjunto de test...")
     y_pred = automl.predict(X_test)
     print_report(y_test, y_pred, id2label)
 
-    # Graficas y reportes
     print("\n[*] Generando reportes...")
     Path("reports").mkdir(exist_ok=True)
 
@@ -124,7 +105,6 @@ def main():
     except Exception as e:
         print(f"     [!] Error exportando resumen: {e}")
 
-    # Resumen final
     print("\n" + "=" * 55)
     print("  ENTRENAMIENTO COMPLETADO")
     print("=" * 55)
