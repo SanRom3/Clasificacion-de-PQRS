@@ -40,40 +40,6 @@ pqrs-automl/
 └── requirements.txt
 ```
 
----
-
-## Instalación y uso
-
-### 1. Instalar dependencias
-```bash
-pip install -r requirements.txt
-python -m spacy download es_core_news_sm
-```
-
-### 2. Entrenar el modelo
-```bash
-# Búsqueda rápida (20 trials, ~2 min)
-python train.py --trials 20
-
-# Búsqueda estándar (50 trials, ~5 min)
-python train.py
-
-# Búsqueda exhaustiva (100 trials, ~10 min)
-python train.py --trials 100
-```
-
-### 3. Ver la demo interactiva
-```bash
-streamlit run app.py
-```
-
-### 4. Ver experimentos en MLflow
-```bash
-mlflow ui
-# Abrir http://localhost:5000
-```
-
----
 
 ## Cómo funciona el AutoML
 
