@@ -290,7 +290,7 @@ with tab2:
         n_textos = st.slider("Cantidad de PQRS a generar", min_value=5, max_value=32, value=12)
     with col_b:
         st.markdown("<br>", unsafe_allow_html=True)
-        generar = st.button("⚡ Generar y clasificar", use_container_width=True, type="primary")
+        generar = st.button("Generar y clasificar", use_container_width=True, type="primary")
 
     if generar:
         with st.spinner(f"Clasificando {n_textos} PQRS..."):
@@ -401,7 +401,7 @@ with tab3:
     all_events = load_events()
     all_events = purge_expired(all_events)
 
-    with st.expander("➕ Agregar nuevo evento", expanded=False):
+    with st.expander("Agregar nuevo evento", expanded=False):
         col_t, col_a = st.columns([2, 1])
         with col_t:
             ev_titulo = st.text_input("Título del evento", placeholder="Ej: Caída del sistema de pagos")
