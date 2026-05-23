@@ -1,10 +1,3 @@
-"""
-app.py
-------
-Clasificador AutoML de PQRS en español.
-Dos modos: clasificación individual y simulación en lote.
-"""
-from src.preprocess import clean_text
 import random
 import nltk
 import joblib
@@ -12,13 +5,19 @@ import numpy as np
 import pandas as pd
 import plotly.graph_objects as go
 import streamlit as st
+from datetime import datetime
 from pathlib import Path
 
 nltk.download("stopwords", quiet=True)
+from src.preprocess import clean_text
+from src.responder import generate_response, get_api_key
+from src.events import (
+    create_event, add_event, delete_event,
+    load_events, get_active_events,
+    build_context_prompt, is_active,
+    time_remaining, purge_expired,
+)
 
-# ─────────────────────────────────────────────
-# Configuración
-# ─────────────────────────────────────────────
 st.set_page_config(
     page_title="Clasificador de PQRS",
     page_icon="📋",
@@ -97,10 +96,8 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-
-# ─────────────────────────────────────────────
 # Textos sintéticos para simulación en lote
-# ─────────────────────────────────────────────
+
 BATCH_TEMPLATES = {
     "Petición": [
         "Solicito respetuosamente una certificación de los pagos realizados durante el último año fiscal.",
@@ -151,9 +148,6 @@ def generate_batch(n: int) -> list:
     return [{"texto": random.choice(BATCH_TEMPLATES[c := random.choice(categorias)]), "cat_real": c} for _ in range(n)]
 
 
-# ─────────────────────────────────────────────
-# Modelo y predicción
-# ─────────────────────────────────────────────
 @st.cache_resource
 def load_model():
     path = Path(__file__).parent / "models" / "best_pipeline.pkl"
@@ -184,12 +178,9 @@ def predict_one(text: str, model) -> dict:
     return {"categoria": cat, "urgencia": infer_urgencia(text, cat), "confianza": conf, "probas": proba}
 
 
-# ─────────────────────────────────────────────
-# Header
-# ─────────────────────────────────────────────
 st.markdown("""
 <div class="header-box">
-    <h1>Clasificador Automático de PQRS</h1>
+    <h1> Clasificador Automático de PQRS</h1>
     <p>Sistema AutoML entrenado con Optuna · Clasifica Peticiones, Quejas, Reclamos y Sugerencias en español sin intervención humana</p>
 </div>
 """, unsafe_allow_html=True)
@@ -199,12 +190,15 @@ if model is None:
     st.error("Modelo no encontrado. Sube `models/best_pipeline.pkl` al repositorio.")
     st.stop()
 
-tab1, tab2, tab3 = st.tabs(["Clasificar texto", "Simulación en lote", "Cómo funciona"])
+tab1, tab2, tab3, tab4 = st.tabs([
+    "Clasificar texto",
+    "Simulación en lote",
+    "Eventos",
+    "Cómo funciona",
+])
 
-
-# ══════════════════════════════════════════════
 # TAB 1 — Texto individual
-# ══════════════════════════════════════════════
+
 with tab1:
     st.markdown("##### Ingresa cualquier texto y el modelo lo clasificará automáticamente")
     st.markdown("")
@@ -248,7 +242,7 @@ with tab1:
             labels = [ID2LABEL[i] for i in range(len(res["probas"]))]
             fig = go.Figure(go.Bar(
                 x=labels, y=res["probas"] * 100,
-                marker_color=[CATEGORY_COLORS.get(label, "#6B7280") for label in labels],
+                marker_color=[CATEGORY_COLORS.get(l, "#6B7280") for l in labels],
                 text=[f"{p*100:.1f}%" for p in res["probas"]],
                 textposition="outside",
             ))
@@ -260,13 +254,32 @@ with tab1:
             )
             st.plotly_chart(fig, use_container_width=True)
 
+        st.markdown("---")
+        st.markdown("**Respuesta automática generada**")
+        with st.spinner("Redactando respuesta..."):
+            api_key        = get_api_key()
+            active_events  = get_active_events()
+            events_context = build_context_prompt(active_events)
+            respuesta, fuente = generate_response(
+                texto_input, res["categoria"], res["urgencia"],
+                api_key, events_context,
+            )
+        if active_events:
+            st.caption(f"Contexto activo: {len(active_events)} evento(s) institucional(es) considerado(s)")
+        cat_color = CATEGORY_COLORS.get(res["categoria"], "#3B82F6")
+        st.markdown(f"""
+        <div style="background:#1e2433;border:1px solid #2d3748;
+        border-left:4px solid {cat_color};border-radius:8px;padding:1.2rem 1.5rem;">
+            <p style="color:#e2e8f0;margin:0;line-height:1.7;font-size:0.95rem">{respuesta}</p>
+            <p style="color:#475569;font-size:0.75rem;margin:0.8rem 0 0 0;
+            font-family:'IBM Plex Mono',monospace">Generado por: {fuente}</p>
+        </div>""", unsafe_allow_html=True)
+
     elif clasificar:
         st.warning("Escribe algún texto antes de clasificar.")
 
-
-# ══════════════════════════════════════════════
 # TAB 2 — Simulación en lote
-# ══════════════════════════════════════════════
+
 with tab2:
     st.markdown("##### Genera un lote de PQRS y obsérvalas clasificadas automáticamente")
     st.markdown("Simula cómo el sistema procesaría cientos de mensajes reales sin intervención humana.")
@@ -277,25 +290,33 @@ with tab2:
         n_textos = st.slider("Cantidad de PQRS a generar", min_value=5, max_value=32, value=12)
     with col_b:
         st.markdown("<br>", unsafe_allow_html=True)
-        generar = st.button("Generar y clasificar", use_container_width=True, type="primary")
+        generar = st.button("⚡ Generar y clasificar", use_container_width=True, type="primary")
 
     if generar:
         with st.spinner(f"Clasificando {n_textos} PQRS..."):
-            batch   = generate_batch(n_textos)
+            batch          = generate_batch(n_textos)
+            api_key        = get_api_key()
+            active_events  = get_active_events()
+            events_context = build_context_prompt(active_events)
             results = []
             for item in batch:
                 res = predict_one(item["texto"], model)
+                respuesta, fuente = generate_response(
+                    item["texto"], res["categoria"], res["urgencia"],
+                    api_key, events_context,
+                )
                 results.append({
-                    "Texto":     item["texto"],
-                    "Categoría": res["categoria"],
-                    "Urgencia":  res["urgencia"],
-                    "Confianza": f"{res['confianza']:.1f}%" if res["confianza"] else "N/A",
+                    "Texto":      item["texto"],
+                    "Categoría":  res["categoria"],
+                    "Urgencia":   res["urgencia"],
+                    "Confianza":  f"{res['confianza']:.1f}%" if res["confianza"] else "N/A",
+                    "Respuesta":  respuesta,
+                    "Fuente":     fuente,
                 })
 
         df = pd.DataFrame(results)
         conteo = df["Categoría"].value_counts()
 
-        # Métricas
         st.markdown("---")
         st.markdown("**Resumen del lote**")
         m_cols = st.columns(4)
@@ -310,7 +331,6 @@ with tab2:
                     <div style="color:#64748b;font-size:0.8rem">{count/n_textos*100:.0f}% del lote</div>
                 </div>""", unsafe_allow_html=True)
 
-        # Gráficas
         st.markdown("")
         col_g1, col_g2 = st.columns(2)
         with col_g1:
@@ -343,7 +363,7 @@ with tab2:
             )
             st.plotly_chart(fig_urg, use_container_width=True)
 
-        # Tabla
+        
         st.markdown("**Detalle del lote clasificado**")
         for _, row in df.iterrows():
             cat_c = CATEGORY_COLORS.get(row["Categoría"], "#6B7280")
@@ -357,14 +377,119 @@ with tab2:
                     <span class="badge" style="background:{urg_c}22;color:{urg_c};border:1px solid {urg_c}55">Urgencia {row['Urgencia']}</span>
                     &nbsp;
                     <span style="color:#475569;font-size:0.75rem;font-family:'IBM Plex Mono',monospace">{row['Confianza']}</span>
+                </span><br>
+                <span style="display:block;margin-top:0.6rem;padding:0.6rem 0.8rem;
+                background:#0f1117;border-radius:4px;border-left:3px solid {cat_c}55">
+                    <span style="color:#64748b;font-size:0.72rem;font-family:'IBM Plex Mono',monospace">
+                    RESPUESTA AUTOMATICA · {row['Fuente']}</span><br>
+                    <span style="color:#94a3b8;font-size:0.85rem">{row['Respuesta']}</span>
                 </span>
             </div>""", unsafe_allow_html=True)
 
 
-# ══════════════════════════════════════════════
-# TAB 3 — Cómo funciona
-# ══════════════════════════════════════════════
+
+# TAB 3 — Eventos institucionales
+
 with tab3:
+    st.markdown("##### Eventos institucionales activos")
+    st.markdown(
+        "Los eventos vigentes se inyectan automáticamente como contexto en las respuestas de la IA. "
+        "Un evento expirado ya no afecta las respuestas."
+    )
+    st.markdown("")
+
+    all_events = load_events()
+    all_events = purge_expired(all_events)
+
+    with st.expander("➕ Agregar nuevo evento", expanded=False):
+        col_t, col_a = st.columns([2, 1])
+        with col_t:
+            ev_titulo = st.text_input("Título del evento", placeholder="Ej: Caída del sistema de pagos")
+        with col_a:
+            ev_area = st.text_input("Área afectada", placeholder="Ej: Pagos, Tramites, General")
+
+        ev_desc = st.text_area(
+            "Descripción",
+            placeholder="Ej: El sistema de pagos en línea presentó fallas entre las 10am y las 2pm del 20 de mayo.",
+            height=90,
+        )
+
+        col_v1, col_v2, col_btn = st.columns([1, 1, 1])
+        with col_v1:
+            ev_valor = st.number_input("Vigencia", min_value=1, max_value=365, value=3)
+        with col_v2:
+            ev_tipo = st.selectbox("Unidad", ["dias", "horas"])
+        with col_btn:
+            st.markdown("<br>", unsafe_allow_html=True)
+            agregar = st.button("Agregar evento", use_container_width=True, type="primary")
+
+        if agregar:
+            if ev_titulo.strip() and ev_desc.strip():
+                ev = create_event(ev_titulo, ev_desc, ev_valor, ev_tipo, ev_area or "General")
+                add_event(ev)
+                st.success(f"Evento '{ev_titulo}' agregado. Vigencia: {ev_valor} {ev_tipo}.")
+                st.rerun()
+            else:
+                st.warning("Completa al menos el título y la descripción.")
+
+    st.markdown("")
+
+    if not all_events:
+        st.info("No hay eventos registrados. Agrega uno para que la IA lo tenga en cuenta.")
+    else:
+        activos   = [e for e in all_events if is_active(e)]
+        expirados = [e for e in all_events if not is_active(e)]
+
+        if activos:
+            st.markdown(f"**Eventos activos ({len(activos)})**")
+            for ev in activos:
+                col_ev, col_del = st.columns([5, 1])
+                with col_ev:
+                    restante = time_remaining(ev)
+                    creado   = datetime.fromisoformat(ev["creado_en"]).strftime("%d/%m/%Y %H:%M")
+                    st.markdown(f"""
+                    <div style="background:#1e2433;border:1px solid #2d3748;
+                    border-left:4px solid #10B981;border-radius:6px;
+                    padding:0.8rem 1rem;margin-bottom:0.4rem;">
+                        <div style="display:flex;justify-content:space-between;align-items:center">
+                            <span style="color:#e2e8f0;font-weight:600">{ev['titulo']}</span>
+                            <span style="color:#10B981;font-size:0.75rem;
+                            font-family:'IBM Plex Mono',monospace">{restante}</span>
+                        </div>
+                        <div style="color:#64748b;font-size:0.75rem;margin:0.2rem 0">
+                            {ev['area']} · Registrado: {creado} · 
+                            Vigencia: {ev['vigencia_valor']} {ev['vigencia_tipo']}
+                        </div>
+                        <div style="color:#94a3b8;font-size:0.85rem;margin-top:0.4rem">
+                            {ev['descripcion']}
+                        </div>
+                    </div>""", unsafe_allow_html=True)
+                with col_del:
+                    st.markdown("<br><br>", unsafe_allow_html=True)
+                    if st.button("Eliminar", key=f"del_{ev['id']}"):
+                        delete_event(ev["id"])
+                        st.rerun()
+
+        if expirados:
+            st.markdown("")
+            with st.expander(f"Eventos expirados ({len(expirados)})", expanded=False):
+                for ev in expirados:
+                    creado = datetime.fromisoformat(ev["creado_en"]).strftime("%d/%m/%Y %H:%M")
+                    st.markdown(f"""
+                    <div style="background:#1e2433;border:1px solid #1e2433;
+                    border-left:4px solid #374151;border-radius:6px;
+                    padding:0.8rem 1rem;margin-bottom:0.4rem;opacity:0.5">
+                        <span style="color:#6B7280;font-weight:600">{ev['titulo']}</span>
+                        <span style="color:#4B5563;font-size:0.75rem;margin-left:1rem">
+                        {ev['area']} · {creado}</span><br>
+                        <span style="color:#6B7280;font-size:0.82rem">{ev['descripcion']}</span>
+                    </div>""", unsafe_allow_html=True)
+
+
+
+# TAB 4 — Cómo funciona
+
+with tab4:
     st.markdown("#### ¿Cómo funciona el AutoML?")
     st.markdown("""
     En lugar de elegir un modelo manualmente, este sistema usa **Optuna** para evaluar
