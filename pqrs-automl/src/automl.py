@@ -1,10 +1,3 @@
-"""
-src/automl.py
--------------
-Motor AutoML con Optuna.
-Busca automáticamente el mejor pipeline entre múltiples modelos y vectorizadores.
-"""
-
 import optuna
 import mlflow
 import joblib
@@ -25,9 +18,7 @@ MODELS_DIR = Path(__file__).parent.parent / "models"
 MODELS_DIR.mkdir(exist_ok=True)
 
 
-# ─────────────────────────────────────────────
-# Espacio de búsqueda
-# ─────────────────────────────────────────────
+
 
 def build_pipeline(trial: optuna.Trial) -> Pipeline:
     """
@@ -35,7 +26,6 @@ def build_pipeline(trial: optuna.Trial) -> Pipeline:
     Optuna elige una combinación en cada trial.
     """
 
-    # 1. Vectorizador
     vectorizer_name = trial.suggest_categorical(
         "vectorizer", ["tfidf", "count"]
     )
@@ -57,7 +47,6 @@ def build_pipeline(trial: optuna.Trial) -> Pipeline:
             max_features=max_features,
         )
 
-    # 2. Clasificador
     classifier_name = trial.suggest_categorical(
         "classifier",
         ["logistic", "svm", "random_forest", "gradient_boosting", "naive_bayes"],
@@ -88,16 +77,12 @@ def build_pipeline(trial: optuna.Trial) -> Pipeline:
             n_estimators=n_estimators,
         )
 
-    else:  # naive_bayes
+    else: 
         alpha = trial.suggest_float("nb_alpha", 0.01, 2.0)
         clf = ComplementNB(alpha=alpha)
 
     return Pipeline([("vectorizer", vectorizer), ("classifier", clf)])
 
-
-# ─────────────────────────────────────────────
-# Función objetivo para Optuna
-# ─────────────────────────────────────────────
 
 def objective(trial, X_train, y_train, X_val, y_val):
     """Entrena un pipeline y devuelve el F1-macro en validación."""
@@ -108,16 +93,11 @@ def objective(trial, X_train, y_train, X_val, y_val):
         preds = pipeline.predict(X_val)
         score = f1_score(y_val, preds, average="macro")
     except Exception as e:
-        # Si un modelo falla (ej: NB con CountVectorizer y valores negativos)
         print(f"  [!] Trial {trial.number} fallo: {e}")
         return 0.0
 
     return score
 
-
-# ─────────────────────────────────────────────
-# Motor principal de AutoML
-# ─────────────────────────────────────────────
 
 class AutoMLClassifier:
     def __init__(self, n_trials: int = 50, experiment_name: str = "PQRS-AutoML"):
@@ -129,21 +109,18 @@ class AutoMLClassifier:
     def fit(self, X_train, y_train, X_val, y_val):
         """Ejecuta la búsqueda y guarda el mejor pipeline."""
 
-        # Configurar MLflow
         mlflow.set_experiment(self.experiment_name)
 
         print(f"\n[*] Iniciando busqueda AutoML con {self.n_trials} trials...")
         print(f"    Comparando: Logistic, SVM, RandomForest, GradBoost, NaiveBayes")
         print(f"    Vectorizadores: TF-IDF, CountVectorizer\n")
 
-        # Crear estudio de Optuna
         self.study = optuna.create_study(
             direction="maximize",
             sampler=optuna.samplers.TPESampler(seed=42),
             pruner=optuna.pruners.MedianPruner(),
         )
 
-        # Función objetivo con datos fijos
         obj = lambda trial: objective(trial, X_train, y_train, X_val, y_val)
 
         with mlflow.start_run(run_name="optuna_search"):
@@ -160,14 +137,12 @@ class AutoMLClassifier:
         print(f"     Mejor clasificador:   {best_params.get('classifier')}")
         print(f"     Mejor vectorizador:   {best_params.get('vectorizer')}")
 
-        # Re-entrenar el mejor pipeline con train+val
         X_full = list(X_train) + list(X_val)
         y_full = list(y_train) + list(y_val)
 
         self.best_pipeline = build_pipeline(self.study.best_trial)
         self.best_pipeline.fit(X_full, y_full)
 
-        # Guardar modelo
         model_path = MODELS_DIR / "best_pipeline.pkl"
         joblib.dump(self.best_pipeline, model_path)
         print(f"     Modelo guardado en: {model_path}")
@@ -185,9 +160,7 @@ class AutoMLClassifier:
         if hasattr(clf, "predict_proba"):
             return self.best_pipeline.predict_proba(X)
         elif hasattr(clf, "decision_function"):
-            # SVM no tiene predict_proba, usamos decision_function normalizado
             scores = self.best_pipeline.decision_function(X)
-            # Softmax manual
             exp_s = np.exp(scores - scores.max(axis=1, keepdims=True))
             return exp_s / exp_s.sum(axis=1, keepdims=True)
         return None
@@ -200,10 +173,6 @@ class AutoMLClassifier:
         assert self.study is not None, "Primero llama a .fit()"
         return self.study.trials_dataframe()
 
-
-# ─────────────────────────────────────────────
-# Cargar modelo guardado
-# ─────────────────────────────────────────────
 
 def load_best_pipeline(path: str = "models/best_pipeline.pkl"):
     return joblib.load(path)
