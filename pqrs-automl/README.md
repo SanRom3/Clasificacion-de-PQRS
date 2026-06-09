@@ -1,15 +1,11 @@
 # AutoML para Clasificación de PQRS en Español
 
-Sistema de Machine Learning automatizado para clasificar Peticiones, Quejas, Reclamos y Sugerencias escritas en español, usando **Optuna** como motor de búsqueda de hiperparámetros y **MLflow** para el tracking de experimentos.
+Sistema de Machine Learning automatizado para clasificar Peticiones, Quejas, Reclamos y Sugerencias escritas en español, usando Optuna como motor de búsqueda de hiperparámetros y MLflow para el tracking de experimentos.
 
----
 
 ## Problema que resuelve
 
-Toda entidad en Colombia está obligada a gestionar PQRS. El problema es que llegan cientos por día y alguien las lee una a una para clasificarlas y asignarlas al área correcta. Este sistema las clasifica **automáticamente** con alta precisión.
-
-**Sin AutoML:** el desarrollador prueba modelos uno a uno manualmente.  
-**Con AutoML:** el sistema evalúa 50+ combinaciones de modelos e hiperparámetros y elige la mejor automáticamente.
+Toda entidad en Colombia está obligada a gestionar PQRS. El problema es que llegan cientos por día y alguien las lee una a una para clasificarlas y asignarlas al área correcta. Este sistema las clasifica automáticamente con alta precisión.
 
 El hecho de que todas las entidades colombianas deban gestionar todo lo que reciben fue mi mayor motivación y lo que me dió la principal idea de hacer este proyecto, pero de igual manera me parece algo muy útil de forma general ya que en cualquier area donde se reciban sugerencias, quejas o cosas por el estilo nunca está demás saber a cuales se les debe dar más importancia, se podría pensar que simplemente se puede dejar a criterio de la persona que escribe la sugerencia o queja pero esto puede traer problemas de que cosas que realmente no son tan importantes o necesarias de revisión inmediata sean marcadas como emergencia, por esto, es mejor este sistema que hace eso automáticamente y de manera indiferente a sentimientos u opiniones
 
@@ -52,13 +48,13 @@ python -m spacy download es_core_news_sm
 
 ### 2. Entrenar el modelo
 ```bash
-# Búsqueda rápida (20 trials, ~2 min)
+# Búsqueda rápida (20 trials)
 python train.py --trials 20
 
-# Búsqueda estándar (50 trials, ~5 min)
+# Búsqueda estándar (50 trials)
 python train.py
 
-# Búsqueda exhaustiva (100 trials, ~10 min)
+# Búsqueda exhaustiva (100 trials)
 python train.py --trials 100
 ```
 
@@ -70,7 +66,7 @@ streamlit run app.py
 ### 4. Ver experimentos en MLflow
 ```bash
 mlflow ui
-# Abrir http://localhost:5000
+# Abrir http://localhost:
 ```
 
 ---
@@ -100,7 +96,7 @@ Optuna busca la combinación óptima entre:
 | Random Forest | ~0.85 |
 | Naive Bayes | ~0.82 |
 
-*El AutoML selecciona el mejor automáticamente sin intervención manual.*
+El AutoML selecciona el mejor automáticamente sin intervención manual.
 
 ---
 
@@ -117,7 +113,4 @@ Optuna busca la combinación óptima entre:
 
 ## Trabajo futuro
 
-- [ ] Agregar BETO (BERT en español) como opción de clasificador
-- [ ] Multi-label: clasificar categoría + urgencia simultáneamente
-- [ ] Integración con API REST (FastAPI)
-- [ ] Dataset con datos reales de entidades colombianas
+- [ ] Agregar BETO como opción de clasificador
