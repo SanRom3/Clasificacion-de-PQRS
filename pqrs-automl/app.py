@@ -1,9 +1,3 @@
-"""
-app.py
-------
-Clasificador AutoML de PQRS en español.
-Dos modos: clasificación individual y simulación en lote.
-"""
 from src.preprocess import clean_text
 import random
 import nltk
@@ -16,9 +10,6 @@ from pathlib import Path
 
 nltk.download("stopwords", quiet=True)
 
-# ─────────────────────────────────────────────
-# Configuración
-# ─────────────────────────────────────────────
 st.set_page_config(
     page_title="Clasificador de PQRS",
     page_icon="📋",
@@ -98,9 +89,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 
-# ─────────────────────────────────────────────
-# Textos sintéticos para simulación en lote
-# ─────────────────────────────────────────────
 BATCH_TEMPLATES = {
     "Petición": [
         "Solicito respetuosamente una certificación de los pagos realizados durante el último año fiscal.",
@@ -151,9 +139,6 @@ def generate_batch(n: int) -> list:
     return [{"texto": random.choice(BATCH_TEMPLATES[c := random.choice(categorias)]), "cat_real": c} for _ in range(n)]
 
 
-# ─────────────────────────────────────────────
-# Modelo y predicción
-# ─────────────────────────────────────────────
 @st.cache_resource
 def load_model():
     path = Path(__file__).parent / "models" / "best_pipeline.pkl"
@@ -184,9 +169,6 @@ def predict_one(text: str, model) -> dict:
     return {"categoria": cat, "urgencia": infer_urgencia(text, cat), "confianza": conf, "probas": proba}
 
 
-# ─────────────────────────────────────────────
-# Header
-# ─────────────────────────────────────────────
 st.markdown("""
 <div class="header-box">
     <h1>Clasificador Automático de PQRS</h1>
@@ -201,10 +183,6 @@ if model is None:
 
 tab1, tab2, tab3 = st.tabs(["Clasificar texto", "Simulación en lote", "Cómo funciona"])
 
-
-# ══════════════════════════════════════════════
-# TAB 1 — Texto individual
-# ══════════════════════════════════════════════
 with tab1:
     st.markdown("##### Ingresa cualquier texto y el modelo lo clasificará automáticamente")
     st.markdown("")
@@ -264,9 +242,6 @@ with tab1:
         st.warning("Escribe algún texto antes de clasificar.")
 
 
-# ══════════════════════════════════════════════
-# TAB 2 — Simulación en lote
-# ══════════════════════════════════════════════
 with tab2:
     st.markdown("##### Genera un lote de PQRS y obsérvalas clasificadas automáticamente")
     st.markdown("Simula cómo el sistema procesaría cientos de mensajes reales sin intervención humana.")
@@ -295,7 +270,6 @@ with tab2:
         df = pd.DataFrame(results)
         conteo = df["Categoría"].value_counts()
 
-        # Métricas
         st.markdown("---")
         st.markdown("**Resumen del lote**")
         m_cols = st.columns(4)
@@ -310,7 +284,6 @@ with tab2:
                     <div style="color:#64748b;font-size:0.8rem">{count/n_textos*100:.0f}% del lote</div>
                 </div>""", unsafe_allow_html=True)
 
-        # Gráficas
         st.markdown("")
         col_g1, col_g2 = st.columns(2)
         with col_g1:
@@ -343,7 +316,6 @@ with tab2:
             )
             st.plotly_chart(fig_urg, use_container_width=True)
 
-        # Tabla
         st.markdown("**Detalle del lote clasificado**")
         for _, row in df.iterrows():
             cat_c = CATEGORY_COLORS.get(row["Categoría"], "#6B7280")
@@ -361,9 +333,6 @@ with tab2:
             </div>""", unsafe_allow_html=True)
 
 
-# ══════════════════════════════════════════════
-# TAB 3 — Cómo funciona
-# ══════════════════════════════════════════════
 with tab3:
     st.markdown("#### ¿Cómo funciona el AutoML?")
     st.markdown("""
