@@ -1,0 +1,15 @@
+streamlit
+fastapi
+uvicorn[standard]
+pydantic
+scikit-learn
+joblib
+nltk
+plotly
+pandas
+numpy
+optuna
+mlflow
+matplotlib
+seaborn
+groq
