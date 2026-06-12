@@ -1,0 +1,11 @@
+-r requirements.txt
+
+# AutoML
+optuna
+
+# Tracking de experimentos
+mlflow
+
+# Visualización adicional
+matplotlib
+seaborn

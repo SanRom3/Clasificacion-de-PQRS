@@ -1,0 +1,25 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.env
+.venv/
+venv/
+
+# Datos crudos (no subir datos sensibles)
+data/raw/*.csv
+data/processed/
+
+# MLflow (experimentos locales, muy pesados)
+experiments/
+mlruns/
+
+# Reportes generados localmente
+reports/
+
+# IMPORTANTE: el modelo SÍ se sube a GitHub para Streamlit Cloud
+# models/best_pipeline.pkl  ← NO ignorar
+
+# OS
+.DS_Store
+Thumbs.db
